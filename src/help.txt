@@ -1,0 +1,7 @@
+```asciidoc
+= Discord PGP bot =
+/pgp [subcommand] [args...]
+= subcommands =
+  help           :: ヘルプを表示します
+  register [URL] :: URL先のPGP鍵を登録します
+```

@@ -1,7 +1,11 @@
-use serenity::async_trait;
-use serenity::model::channel::Message;
+use async_trait::async_trait;
+use serenity::client::{Context, EventHandler};
 use serenity::model::gateway::Ready;
-use serenity::prelude::*;
+use serenity::model::interactions::application_command::ApplicationCommandInteractionDataOptionValue;
+use serenity::model::interactions::{Interaction, InteractionResponseType};
+use serenity::prelude::GatewayIntents;
+use serenity::utils::MessageBuilder;
+use serenity::Client;
 use std::env;
 
 struct Handler;
@@ -12,13 +16,51 @@ impl EventHandler for Handler {
         println!("{} is connected!", ready.user.name);
     }
 
-    async fn message(&self, ctx: Context, msg: Message) {
-        if msg.content != "!ping" {
-            return;
-        }
+    async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
+        if let Interaction::ApplicationCommand(command) = interaction {
+            let content = match command.data.name.as_str() {
+                "pgp" => {
+                    let subcommand = command.data.options.first().unwrap();
+                    let options = &subcommand.options;
+                    let subcommand = subcommand.name.as_ref();
 
-        if let Err(why) = msg.channel_id.say(&ctx.http, "Pong!").await {
-            println!("Error sending message: {:?}", why);
+                    match subcommand {
+                        "register" => {
+                            let url = options
+                                .iter()
+                                .find(|option| option.name == "url")
+                                .unwrap()
+                                .to_owned()
+                                .resolved
+                                .unwrap();
+
+                            // TODO: 登録処理を書く
+                            if let ApplicationCommandInteractionDataOptionValue::String(url) = url {
+                                MessageBuilder::new()
+                                    .push_mono(url)
+                                    .push("を登録しました")
+                                    .build()
+                            } else {
+                                unreachable!()
+                            }
+                        }
+                        "help" => include_str!("./help.txt").to_owned(),
+                        _ => unreachable!(),
+                    }
+                }
+                _ => unreachable!(),
+            };
+
+            if let Err(err) = command
+                .create_interaction_response(&ctx.http, |response| {
+                    response
+                        .kind(InteractionResponseType::ChannelMessageWithSource)
+                        .interaction_response_data(|message| message.content(content))
+                })
+                .await
+            {
+                eprintln!("Cannot responed to slash command: {}", err);
+            }
         }
     }
 }
