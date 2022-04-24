@@ -4,6 +4,8 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use ulid::Ulid;
 
+// TODO: トランザクションの観点から色々やばいのでどうにかしたい
+
 #[derive(Debug)]
 struct MemUserRepositoryInner {
     users: Vec<User>,
@@ -47,10 +49,10 @@ impl UserRepository for MemUserRepository {
         }
     }
 
-    async fn find_by_discord_id(&self, id: u64) -> Result<Option<User>> {
+    async fn find_by_discord_id(&self, discord_id: u64) -> Result<Option<User>> {
         let users = &self.inner.lock().await.users;
 
-        let user = users.iter().find(|u| u.discord_id == id).cloned();
+        let user = users.iter().find(|u| u.discord_id == discord_id).cloned();
 
         Ok(user)
     }
