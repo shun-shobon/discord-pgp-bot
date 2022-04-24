@@ -18,6 +18,7 @@ impl EventHandler for Handler {
         println!("{} is connected!", ready.user.name);
     }
 
+    // TODO: あまりにも汚いのでどうにかする
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::ApplicationCommand(command) = interaction {
             let content = match command.data.name.as_str() {
