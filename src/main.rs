@@ -1,14 +1,22 @@
 mod database;
 
+use crate::database::UserRepository;
 use async_trait::async_trait;
+use database::mem::MemUserRepository;
 use serenity::client::{Context, EventHandler};
 use serenity::model::gateway::Ready;
 use serenity::model::interactions::application_command::ApplicationCommandInteractionDataOptionValue;
 use serenity::model::interactions::{Interaction, InteractionResponseType};
-use serenity::prelude::GatewayIntents;
+use serenity::prelude::{GatewayIntents, TypeMapKey};
 use serenity::utils::MessageBuilder;
 use serenity::Client;
 use std::env;
+
+struct UserRepositoryData;
+
+impl TypeMapKey for UserRepositoryData {
+    type Value = Box<dyn UserRepository + Send + Sync>;
+}
 
 struct Handler;
 
@@ -37,7 +45,9 @@ impl EventHandler for Handler {
                                 .resolved
                                 .unwrap();
 
-                            // TODO: 登録処理を書く
+                            let user_repository =
+                                ctx.data.write().await.get::<UserRepositoryData>().unwrap();
+
                             if let ApplicationCommandInteractionDataOptionValue::String(url) = url {
                                 MessageBuilder::new()
                                     .push_mono(url)
@@ -74,11 +84,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let intents = GatewayIntents::GUILD_MESSAGES | GatewayIntents::MESSAGE_CONTENT;
 
-    Client::builder(&token, intents)
+    let mut client = Client::builder(&token, intents)
         .event_handler(Handler)
-        .await?
-        .start()
         .await?;
+
+    client
+        .data
+        .write()
+        .await
+        .insert::<UserRepositoryData>(Box::new(MemUserRepository::new()));
+
+    client.start().await?;
 
     Ok(())
 }

@@ -11,6 +11,7 @@ pub struct ID(String);
 #[derive(Debug, Clone)]
 pub struct User {
     pub id: Option<ID>,
+    pub discord_id: u64,
     pub pgp_pub_key: GPGKey,
 }
 
@@ -23,7 +24,7 @@ pub struct GPGKey {
 #[async_trait]
 pub trait UserRepository {
     async fn save(&mut self, user: User) -> Result<User>;
-    async fn find_by_id(&self, id: ID) -> Result<Option<User>>;
+    async fn find_by_discord_id(&self, id: u64) -> Result<Option<User>>;
 }
 
 #[derive(Debug, Error)]

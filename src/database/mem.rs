@@ -47,13 +47,10 @@ impl UserRepository for MemUserRepository {
         }
     }
 
-    async fn find_by_id(&self, id: ID) -> Result<Option<User>> {
+    async fn find_by_discord_id(&self, id: u64) -> Result<Option<User>> {
         let users = &self.inner.lock().await.users;
 
-        let user = users
-            .iter()
-            .find(|u| u.id.as_ref().unwrap() == &id)
-            .cloned();
+        let user = users.iter().find(|u| u.discord_id == id).cloned();
 
         Ok(user)
     }
@@ -69,6 +66,7 @@ mod test {
 
         let user = User {
             id: None,
+            discord_id: 12345,
             pgp_pub_key: GPGKey {
                 fingerprint: "12345".to_string(),
                 key: Vec::new(),
@@ -78,6 +76,7 @@ mod test {
         let new_user = user_repository.save(user).await?;
 
         assert!(new_user.id.is_some());
+        assert_eq!(new_user.discord_id, 12345);
         assert_eq!(new_user.pgp_pub_key.fingerprint, "12345");
 
         Ok(())
