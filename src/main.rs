@@ -1,3 +1,5 @@
+mod database;
+
 use async_trait::async_trait;
 use serenity::client::{Context, EventHandler};
 use serenity::model::gateway::Ready;
